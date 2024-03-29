@@ -13,7 +13,10 @@ const authorizeUser = async (req, res, next) => {
     jwt.verify(token, config.jwtSecret, async (err, data) => {
       try {
         if (err) {
-          throw new HttpError(401, "Invalid token or token expired.");
+          if (err instanceof jwt.TokenExpiredError) {
+            throw new HttpError(403, "Access token expired.");
+          }
+          throw new HttpError(401, "Invalid access token.");
         }
         const user = await userModel.findById(data._id);
         if (!user) {

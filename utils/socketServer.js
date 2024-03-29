@@ -37,19 +37,23 @@ const initSocketServer = (httpServer) => {
       if (!token) {
         return next(new Error("Token not provided."));
       }
-      const data = jwt.verify(token, config.jwtSecret);
-      if (!data || data instanceof Error) {
-        return next(new Error("Token expired or invalid."));
-      }
-      const user = await userModel.findById(data._id);
-      if (!user) {
-        return next(new Error("User not found."));
-      }
-      if (!user.isVerified) {
-        return next(new Error("User not verified."));
-      }
-      socket.handshake.headers.userData = user;
-      return next();
+      jwt.verify(token, config.jwtSecret, async (err, data) => {
+        if (err) {
+          if (err instanceof jwt.TokenExpiredError) {
+            return next(new Error("Access token expired."));
+          }
+          return next(new Error("Invalid access token."));
+        }
+        const user = await userModel.findById(data._id);
+        if (!user) {
+          return next(new Error("User not found."));
+        }
+        if (!user.isVerified) {
+          return next(new Error("User not verified."));
+        }
+        socket.handshake.headers.userData = user;
+        return next();
+      });
     });
 
     io.on("connection", async (socket) => {
