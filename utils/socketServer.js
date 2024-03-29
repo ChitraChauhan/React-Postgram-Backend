@@ -27,7 +27,11 @@ const removeUser = async (socket) => {
 
 const initSocketServer = (httpServer) => {
   try {
-    io = new Server(httpServer);
+    io = new Server(httpServer, {
+      cors: {
+        origin: "*",
+      },
+    });
     io.use(async (socket, next) => {
       const token = socket.handshake.headers.token;
       if (!token) {
