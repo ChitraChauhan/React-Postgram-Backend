@@ -1,9 +1,9 @@
-Social Media Node
+Social Media Node (Backend)
 
 Prerequisites :
 
-1. Node.js,
-2. MongoDB,
+1. Node.js
+2. MongoDB
 3. Postman
 
 To start the project:
@@ -17,10 +17,10 @@ Postman Setup:
 1. You must have received the POSTMAN collection JSON file while cloning the project. (Root Folder "social-media-app-api.json").
 2. Go to POSTMAN and Select any workspace.
 3. Then click on the import button to import the POSTMAN collection you got from the project folder.
-4. Create a new environment in POSTMAN from 'Environment quick look' button and configure this two variables.
-   i - baseURL :- http://localhost:5000
-   ii - token :- token (You will get token after successful login)
-   PS: Make sure you save variables after changing in the postman environment.
+4. Create a new environment in POSTMAN from the 'Environment quick look' button and configure these two variables.
+   i - baseURL:- http://localhost:5000
+   ii - token:- token (You will get a token after successful login)
+   PS: Make sure you save variables after changing in the Postman environment.
 
 For environment variable on node project:
 
@@ -29,11 +29,9 @@ For environment variable on node project:
 ```
    PORT=5000
    DATABASE_URL="mongodb://127.0.0.1:27017/postgram"
-   NODE_MAILER_USER="{Ask Dhruv/Viral}"
-   NODE_MAILER_USER_PASS="{Ask Dhruv/Viral}"
 ```
 
 Socket Setup:
 
-1. For Connecting socket, pass auth token in headers.
-2. For listening to new post event, add event listener with event "new-post".
+1. For Connecting the socket, pass the auth token in the headers.
+2. For listening to new post events, add event listener with the event "new-post".
