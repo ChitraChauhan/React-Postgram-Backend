@@ -8,7 +8,7 @@ const authorizeUser = async (req, res, next) => {
     const header = req.headers["authorization"] || null;
     const token = header?.split(" ")[1];
     if (!header || !token) {
-      throw new HttpError(400, "Token not provided.");
+      throw new HttpError(401, "Access token not provided.");
     }
     jwt.verify(token, config.jwtSecret, async (err, data) => {
       try {

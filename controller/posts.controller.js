@@ -23,10 +23,19 @@ const createPost = async (req, res, next) => {
       userId: req.user._id,
       ...req.body,
     });
-    await eventEmitter("new-post", createdPost, createdPost.isPrivate);
+    const data = await postModal
+      .findOne({ _id: createdPost._id })
+      .populate({
+        path: "userId",
+        select: "_id firstname lastname username",
+      })
+      .lean();
+    data.userData = data.userId;
+    delete data.userId;
+    await eventEmitter("new-post", data, createdPost.isPrivate);
     return res.status(201).json({
       status: "success",
-      data: createdPost,
+      data: data,
     });
   } catch (e) {
     next(e);
@@ -38,8 +47,7 @@ const getFeedPost = async (req, res, next) => {
     let { page, perPage, search } = req.query;
 
     page = page && page > 0 ? Number(page) - 1 : 0;
-    perPage = perPage && perPage > 0 ? perPage : 5;
-
+    perPage = perPage && perPage > 0 ? Number(perPage) : 5;
     let searchQuery = { isPrivate: false };
     if (search) {
       searchQuery.title = {
@@ -55,11 +63,48 @@ const getFeedPost = async (req, res, next) => {
       searchQuery.isPrivate = req.query.isPrivate == "true";
     }
     const totalPosts = await postModal.countDocuments(searchQuery);
-    const getPosts = await postModal
-      .find(searchQuery)
-      .skip(page * perPage)
-      .limit(perPage)
-      .sort({ createdAt: "desc" });
+    const pipeline = [
+      {
+        $match: searchQuery,
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $skip: page * perPage,
+      },
+      {
+        $limit: perPage,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userData",
+        },
+      },
+      {
+        $unwind: "$userData",
+      },
+      {
+        $project: {
+          _id: 1,
+          filePath: 1,
+          title: 1,
+          description: 1,
+          isPrivate: 1,
+          createdAt: 1,
+          userData: {
+            _id: 1,
+            firstname: 1,
+            lastname: 1,
+            username: 1,
+          },
+        },
+      },
+    ];
+    const getPosts = await postModal.aggregate(pipeline);
     return res.status(200).json({
       status: "success",
       data: {
