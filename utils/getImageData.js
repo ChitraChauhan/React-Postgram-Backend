@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const HttpError = require("./HttpError");
 
 const getExt = async (filePath) => {
   const splittedArray = filePath.split(".");
@@ -28,10 +29,10 @@ const getImageBase64 = async (filePath) => {
       });
 
       fileStream.on("error", (err) => {
-        reject(err);
+        reject(new HttpError(404, "File not found or malformed file path."));
       });
     } catch (error) {
-      reject(new Error("File not found or malformed file path."));
+      reject(new HttpError(404, "File not found or malformed file path."));
     }
   });
 };
