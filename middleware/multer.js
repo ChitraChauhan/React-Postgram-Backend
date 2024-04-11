@@ -40,7 +40,7 @@ const multerStorage = multer.diskStorage({
     try {
       const fileName = `${new Date().getTime()}-${file.originalname}`;
       const filePath = `${req.user._id}/${fileName}`;
-      req.body.filePath = filePath;
+      req.filePath = filePath;
       cb(null, fileName);
     } catch (e) {
       next(e);

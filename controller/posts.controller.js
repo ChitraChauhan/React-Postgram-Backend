@@ -18,6 +18,10 @@ const CREATE_POST_VALIDATION_SCHEMA = yup.object({
 
 const createPost = async (req, res, next) => {
   try {
+    delete req.body.filePath;
+    if (req.filePath) {
+      req.body.filePath = req.filePath;
+    }
     await CREATE_POST_VALIDATION_SCHEMA.validate(req.body);
     const createdPost = await postModal.create({
       userId: req.user._id,
