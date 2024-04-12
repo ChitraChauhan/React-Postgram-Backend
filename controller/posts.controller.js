@@ -59,7 +59,7 @@ const getFeedPost = async (req, res, next) => {
         $options: "i",
       };
     }
-    if (req.query.isMyPostsOnly) {
+    if (req.query.isMyPostsOnly && req.query.isMyPostsOnly === "true") {
       const userId = req.user._id;
       searchQuery.userId = userId;
     }
