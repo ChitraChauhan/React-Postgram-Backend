@@ -37,7 +37,8 @@ const validationSchema = {
     .required("Password is required")
     .min(8, "The password must be at least 8 characters")
     .max(15, "The password can be at most 15 characters"),
-  isPrivate: yup.boolean().required("Private or not is required."),
+  // isPrivate: yup.boolean().required("Private or not is required."),
+  isPrivate: yup.boolean(),
   filePath: yup.string(),
   title: yup.string().required("Post title is required."),
   description: yup.string(),
