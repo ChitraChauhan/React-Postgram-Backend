@@ -7,7 +7,7 @@ const {
   isPrivate,
 } = require("../utils/validations");
 const { getImageBase64 } = require("../utils/getImageData");
-const { eventEmitter } = require("../utils/socketServer");
+// const { eventEmitter } = require("../utils/socketServer");
 
 const CREATE_POST_VALIDATION_SCHEMA = yup.object({
   filePath,
@@ -32,7 +32,7 @@ const createPost = async (req, res, next) => {
       .lean();
     data.userData = data.userId;
     delete data.userId;
-    await eventEmitter("new-post", data, createdPost.isPrivate);
+    // await eventEmitter("new-post", data, createdPost.isPrivate);
     return res.status(201).json({
       status: "success",
       data: data,
@@ -100,6 +100,7 @@ const getFeedPost = async (req, res, next) => {
             firstname: 1,
             lastname: 1,
             username: 1,
+            profilePhoto: 1
           },
         },
       },
@@ -119,15 +120,21 @@ const getFeedPost = async (req, res, next) => {
 
 const getUsersPosts = async (req, res, next) => {
   try {
-    let { page, perPage, userId } = req.query;
+    let { page, perPage, userId, search } = req.query;
 
     page = page && page > 0 ? Number(page) - 1 : 0;
     perPage = perPage && perPage > 0 ? perPage : 5;
 
     let searchQuery = { isPrivate: false };
+    if (search) {
+      searchQuery.title = {
+        $regex: req.query.search,
+        $options: "i",
+      };
+    }
     if ((userId && userId === req.user._id) || !userId) {
       delete searchQuery.isPrivate;
-      searchQuery = { userId: req.user._id };
+      searchQuery = { userId: req.user._id, ...searchQuery };
     } else {
       searchQuery.userId = userId;
     }
@@ -184,9 +191,43 @@ const getImage = async (req, res, next) => {
   }
 };
 
+const deletePost = async (req, res, next) => {
+  try {
+    const isDeleted = await postModal.findOneAndDelete({_id: req.params.id});
+    if (!isDeleted) {
+      return res
+          .status(404)
+          .json({ status: "error", message: "Post not found" });
+    }
+    return res
+        .status(200)
+        .json({ status: "success", message: "Post deleted successfully." });
+  } catch (e) {
+    next(e);
+  }
+};
+
+// update post
+const updatePost = async (req, res, next) => {
+  try {
+    console.log('req.body', req.body)
+    const post = await postModal.findByIdAndUpdate(req.body._id, req.body);
+    console.log('post', post);
+    if (!post) {
+      return res.status(403).json("Post not found");
+    }
+    return res.status(200).json({ status: "success", data: post });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+};
+
+
 module.exports = {
   createPost,
   getFeedPost,
   getUsersPosts,
   getImage,
+  deletePost,
+  updatePost
 };

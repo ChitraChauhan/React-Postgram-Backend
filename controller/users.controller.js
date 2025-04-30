@@ -8,7 +8,7 @@ const postModal = require("../models/posts.modal");
 
 const getUser = async (req, res, next) => {
   try {
-    const userJson = await userModel.findById(req.user._id, {
+    const userJson = await userModel.findById(req.query.user_id, {
       password: 0,
       isVerified: 0,
     });
@@ -102,6 +102,9 @@ const getAllUsers = async (req, res, next) => {
         username: 1,
         email: 1,
         isPrivate: 1,
+        profilePhoto: 1,
+        followers: 1,
+        followings: 1
       })
       .skip(page * perPage)
       .limit(perPage)
@@ -133,10 +136,129 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+//get friends
+const getFriends = async (req, res, next) => {
+  try {
+    const user = await userModel.findById(req.query.userId);
+    const friends = await Promise.all(
+        user.followers.map((friendId) => {
+          return userModel.findById(friendId);
+        })
+    );
+    let friendList = [];
+    friends.map((friend) => {
+      const { _id, username, profilePicture } = friend;
+      friendList.push({ _id, username, profilePicture });
+    });
+    res.status(200).json(friendList)
+  } catch (err) {
+    res.status(500).json(err);
+  }
+}
+
+//follow a user
+const followUser = async (req, res, next) => {
+  if (req.body.userId !== req.query.id) {
+    try {
+      const currentUser = await userModel.findById(req.body.userId); //mayank
+      const user = await userModel.findById(req.query.id); // harshi
+      if (!user.followers.includes(req.body.userId)) {
+        // Update current user followings list
+        const followings = currentUser?.followings || [];
+        followings.push(req.query.id);
+        currentUser.followings = followings;
+        await userModel.findByIdAndUpdate(req.body.userId, currentUser, {
+            new: true,
+            select: "-password",
+          });
+
+        // Update logged in user followers list
+        const followers = user?.followers || [];
+        followers.push(req.body.userId);
+        user.followers = followers;
+        await userModel.findByIdAndUpdate(req.query.id, user, {
+          new: true,
+          select: "-password",
+        });
+        // await currentUser.updateOne({}, {$push: {followings: req.query.id}})//mayank -> followings -> harshi
+        // await user.updateOne({}, {$push: {followers: req.body.userId}} ); //harshi -> followers -> mayank
+        res.status(200).send({
+          status: "success",
+          message: "user has been followed",
+        });
+      } else {
+        res.status(403).send({
+          status: "error",
+          message: "you already follow this user"
+        });
+      }
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  } else {
+    res.status(403).send({
+      status: "error",
+      message: "you can't follow yourself"
+    });
+  }
+}
+
+//unfollow a user
+
+const unFollowUser = async (req, res, next) => {
+  if (req.body.userId !== req.query.id) {
+    try {
+      const user = await userModel.findById(req.query.id);
+      const currentUser = await userModel.findById(req.body.userId);
+      if (user.followers.includes(req.body.userId)) {
+        // Update current user followings list
+        let followings = currentUser?.followings || [];
+        followings = followings.filter(f => f !== req.query.id);
+        currentUser.followings = followings;
+        await userModel.findByIdAndUpdate(req.body.userId, currentUser, {
+          new: true,
+          select: "-password",
+        });
+
+
+        // Update logged in user followers list
+        let followers = user?.followers || [];
+        followers = followers.filter((f => f !== req.body.userId));
+        user.followers = followers;
+        await userModel.findByIdAndUpdate(req.query.id, user, {
+          new: true,
+          select: "-password",
+        });
+        // await user.updateOne({ $pull: { followers: req.body.userId } });
+        // await currentUser.updateOne({ $pull: { followings: req.query.id } });
+        res.status(200).send({
+          status: "success",
+          message: "user has been unfollowed",
+        });
+      } else {
+        res.status(403).send({
+          status: "error",
+          message: "you don't follow this user"
+        });
+      }
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  } else {
+    res.status(403).send({
+      status: "error",
+      message: "you can't unfollow yourself"
+    });
+  }
+}
+
 module.exports = {
   getUser,
   updateUser,
   getUserProfile,
   getAllUsers,
   deleteUser,
+  followUser,
+  unFollowUser,
+  getFriends
 };

@@ -42,6 +42,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+      followings: {
+          type: Array,
+          default: [],
+      },
+      followers: {
+          type: Array,
+          default: [],
+      },
   },
   {
     timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" },
