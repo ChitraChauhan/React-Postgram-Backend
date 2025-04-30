@@ -12,7 +12,10 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL, // Allow requests from Netlify frontend
+  credentials: true
+}));
 
 app.use("/", require("./routes/index"));
 
