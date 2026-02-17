@@ -7,6 +7,7 @@ const {
   isPrivate,
 } = require("../utils/validations");
 const { getImageBase64 } = require("../utils/getImageData");
+const fs = require("fs");
 // const { eventEmitter } = require("../utils/socketServer");
 
 const CREATE_POST_VALIDATION_SCHEMA = yup.object({
@@ -19,9 +20,18 @@ const CREATE_POST_VALIDATION_SCHEMA = yup.object({
 const createPost = async (req, res, next) => {
   try {
     await CREATE_POST_VALIDATION_SCHEMA.validate(req.body);
+    let imageBase64 = req.file
+        ? fs.readFileSync(req.file.path, {encoding: "base64"})
+        : null;
+    const mimeType = req.file?.mimetype;
+    imageBase64
+        ? `data:${mimeType};base64,${imageBase64}`
+        : null // ✅ THIS IS THE FIX
+
     const createdPost = await postModal.create({
-      userId: req.user._id,
-      ...req.body,
+        title: req.body.title,
+        userId: req.user._id,
+        filePath: imageBase64
     });
     const data = await postModal
       .findOne({ _id: createdPost._id })
@@ -32,6 +42,7 @@ const createPost = async (req, res, next) => {
       .lean();
     data.userData = data.userId;
     delete data.userId;
+    data.filePath = imageBase64;
     // await eventEmitter("new-post", data, createdPost.isPrivate);
     return res.status(201).json({
       status: "success",
