@@ -2,7 +2,7 @@ const { MulterError } = require("multer");
 const HttpError = require("./HttpError");
 
 const errorHandler = async (error, req, res, next) => {
-  // console.log(error, ":::: in Handler");
+  console.log(error, ":::: in Handler");
   if (error instanceof HttpError) {
     return res
       .status(error.code)
