@@ -24,9 +24,9 @@ const createPost = async (req, res, next) => {
         ? fs.readFileSync(req.file.path, {encoding: "base64"})
         : null;
     const mimeType = req.file?.mimetype;
-    imageBase64
+      imageBase64 = imageBase64
         ? `data:${mimeType};base64,${imageBase64}`
-        : null // ✅ THIS IS THE FIX
+        : null
 
     const createdPost = await postModal.create({
         title: req.body.title,
